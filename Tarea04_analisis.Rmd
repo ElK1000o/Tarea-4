@@ -1,0 +1,294 @@
+---
+title: "Tarea04_analisis"
+author: "Eugenio Ortega - Camilo Riquelme"
+date: '2022-06-11'
+output:
+  pdf_document: default
+  html_document: default
+toc: yes
+always_allow_html: yes
+theme: journal
+---
+
+![](https://www.uahurtado.cl/wp-images/uploads/2015/05/uah2.png)
+
+#### Universidad Alberto Hurtado
+#### Carrera: Sociología
+#### Profesora: Valentina Andrade de la Horra
+#### Ayudantes: Nicolás Godoy Marquéz  y Dafne Jaime Vargas
+#### Estudiantes: Eugenio Ortega - Camilo Riquelme
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r paquetes, include=FALSE}
+pacman::p_load(haven, tidyverse, sjmisc, sjPlot, survey, srvyr)
+```
+
+
+
+```{r datos, include=FALSE}
+data_proc=readRDS("output/data/datos_proc.rds")
+```
+
+##Ecuacion Modelo Lineal Simple
+
+$${Y}=b_{0} +b_{1}X$$
+
+```{r modelo0, echo=FALSE}
+modelo0 <- lm(cuidarse ~ riesgo ,
+              data = data_proc, 
+              weights = factor_expansion)
+```
+
+
+
+```{r summary modelo0, echo=FALSE}
+summary(modelo0)
+```
+
+
+
+```{r tabla modelo0, echo=FALSE}
+sjPlot::tab_model(modelo0, 
+                  show.ci=FALSE,  
+                  encoding = "UTF-8")
+```
+
+
+
+```{r grafico modelo0, echo=FALSE}
+sjPlot::plot_model(modelo0, 
+                   show.p = T,
+                   show.values =  T,
+                   digits = 3,
+                   ci.lvl = c(0.95), 
+                   title = "Modelo0", 
+                   vline.color = "cyan")
+```
+
+Dirección: Al ser el valor 0,16 vemos una dirección minimamente positiva.
+Fuerza: Vemos que la fuerza es muy cercana a 0 lo que indica una alta dispersión
+Significancia: Tenemos un nivel de significancia de 99.99%, a pesar de la poca explicación del modelo
+
+```{r modelo 1, echo=FALSE}
+modelo1 = glm(cuidarse ~ riesgo + trabaja + edad_tr,
+                    family = gaussian(link = "identity"),
+                    data = data_proc, 
+                    weights = factor_expansion)
+```
+
+
+
+```{r summary modelo1, echo=FALSE}
+summary(modelo1)
+```
+
+
+
+```{r modelo 2, echo=FALSE}
+modelo2 = glm(cuidarse ~ riesgo_cod + trabaja + edad_tr,
+                    family = gaussian(link = "identity"),
+                    data = data_proc, 
+                    weights = factor_expansion)
+```
+
+
+
+```{r summary modelo2, echo=FALSE}
+summary(modelo2)
+```
+
+
+
+```{r tabla unica modelos 1 y 2, echo=FALSE}
+sjPlot::tab_model(list(modelo1, modelo2),
+                  show.ci=FALSE,
+                  digits = 3,
+                  p.style = "stars",
+                  dv.labels = c("Modelo 1", "Modelo 2"),
+                  string.pred = "Predictores", string.est = "β",
+                  encoding =  "UTF-8")
+```
+
+
+
+```{r grafico modelo2, echo=FALSE}
+sjPlot::plot_model(modelo2, 
+                    show.p = T,
+                    digits = 3,
+                    show.values =  T,
+                    ci.lvl = c(0.95), 
+                    title = "Modelo2", 
+                    vline.color = "black")
+```
+
+Interpretación modelo 2:
+
+Variable Percepción riesgo:
+
+Dirección: Positiva en los casos donde existe peligrosidad, y altamente negativa en el caso de nada peligroso 
+Fuerza: Muy cercana a 0 en los casos de peligrosidad, indicando una alta dispersión, y en el caso de no peligrosidad, es lejana a 0 indicando una alta tendencia  
+Descripción: Se ve una alta dispersión en general, excepto en la no peligrosidad donde hay una alta concentración de datos
+
+Variable trabajo:
+
+Dirección: La dirección es negativa, si se trabajo la semana pasada, disminuye la percepción del riesgo
+Fuerza: Posee una fuerza cercana aa 0 indicando una alta dispersión
+Descripción: Existe una alta dispersión de datos y a medida que se trabajo la semana pasada, disminuye la percepción de riesgo
+
+Variable edad:
+
+Dirección: a mayor edad, aumenta la percepción de riesgo, siendo negativa para los jovenes
+Fuerza: Posee en ambos casos una fuerza cercana a 0 indicando alta dispersión
+Descripción: Los adultos mayores poseen una alta percepción de riesgo, mientras que los jovenes una baja percepción de riesgo, existiendo una alta dispersión de los datos
+
+Interpretación Hipotesís
+
+H1: En este caso a mayor percepción de riesgo, disminuye la distancia física, rechazandose esta hipotesís, a pesar de que sea contrasentido
+
+H2: En este caso las personas que trabajan, mantienen menos distancia fisíca, en este caso se cumple la hipotesís
+
+H4: Los adultos mayores, presentan una menor distancia fisíca, no cumpliendose la hipotesís
+
+```{r modelo nulo con ponderador, echo=FALSE}
+modelonulo_con <- lm(dummy_cuidarse ~ 1,
+              data = data_proc, 
+              weights = factor_expansion)
+```
+
+
+
+```{r summary modelo nulo_con, echo=FALSE}
+summary(modelonulo_con)
+```
+
+
+
+```{r modelo nulo sin ponderador, echo=FALSE}
+modelonulo_sin <- lm(dummy_cuidarse ~ 1,
+                  data = data_proc)
+```
+
+
+
+```{r summary modelonulo_sin, echo=FALSE}
+summary(modelonulo_sin)
+```
+
+
+
+```{r comparacion modelos, echo=FALSE}
+summary(modelonulo_con);summary(modelonulo_sin)
+```
+
+
+
+```{r modelo 3, echo=FALSE}
+modelo3 = glm(dummy_cuidarse ~ edad_tr,
+              family = gaussian(link = "identity"),
+              data = data_proc, 
+              weights = factor_expansion)
+```
+
+
+
+```{r summary modelo3, echo=FALSE}
+summary(modelo3)
+```
+
+
+
+```{r modelo 4, echo=FALSE}
+modelo4 = glm(dummy_cuidarse ~ trabaja,
+             family = gaussian(link = "identity"),
+             data = data_proc, 
+             weights = factor_expansion)
+```
+
+
+
+```{r summary modelo4, echo=FALSE}
+summary(modelo4)
+```
+
+
+
+```{r modelo 5, echo=FALSE}
+modelo5 = glm(dummy_cuidarse ~ edad_tr + trabaja,
+              family = gaussian(link = "identity"),
+              data = data_proc, 
+              weights = factor_expansion)
+```
+
+
+
+```{r summary modelo5, echo=FALSE}
+summary(modelo5)
+```
+
+
+
+```{r modelo 6, echo=FALSE}
+modelo6 = glm(dummy_cuidarse ~ riesgo_cod,
+              family = gaussian(link = "identity"),
+              data = data_proc, 
+              weights = factor_expansion)
+```
+
+
+
+```{r summary modelo6, echo=FALSE}
+summary(modelo6)
+```
+
+
+
+```{r tabla unica modelos nulo_con-nulo_sin-3-4-5-6, echo=FALSE}
+sjPlot::tab_model(list(modelonulo_con, modelonulo_sin, modelo3, modelo4, modelo5, modelo6),
+                  show.ci=FALSE,
+                  digits = 3,
+                  p.style = "stars",
+                  dv.labels = c("Modelo Nulo_con", "Modelo Nulo_sin", "Modelo 3", "Modelo 4", "Modelo 5", "Modelo 6"),
+                  string.pred = "Predictores", string.est = "β",
+                  encoding =  "UTF-8")
+```
+
+
+
+```{r esi design con survey, echo=FALSE}
+esi_design <- as_survey_design(data_proc, 
+                               ids = 1,
+                               weights = factor_expansion)
+```
+
+
+
+```{r modelo 6 survey, echo=FALSE}
+modelo6_survey <- svyglm(dummy_cuidarse ~ riesgo_cod,
+                         family = gaussian(link = "identity"),
+                         design = esi_design)
+```
+
+
+
+```{r summary modelo6_survey, echo=FALSE}
+summary(modelo6_survey)
+```
+
+
+
+```{r grafico modelo6 y 6_survey, echo=FALSE}
+sjPlot::plot_models(modelo6, modelo6_survey, 
+                   show.p = T,
+                   show.values =  T,
+                   ci.lvl = c(0.95), 
+                   title = "Modelo6/survey", 
+                   vline.color = "black")
+
+```
+
+
